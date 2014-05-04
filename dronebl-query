@@ -54,10 +54,10 @@ class Options
     @opt_parser.parse! args
 
     if (@use_key_file && !(File.exists? @key_file)) && @key_str.nil?
-      throw ArgumentError, "No key string provided and #{@key_file} does not exist -- unable to authenticate. See http://dronebl.org/rpckey_signup if you need a key."
+      abort "No key string provided and #{@key_file} does not exist -- unable to authenticate. See http://dronebl.org/rpckey_signup if you need a key."
     end
     if @use_key_file && !@key_str.nil?
-      throw ArgumentError, "Trying to use both --use-key-file and --key -- make up your mind!"
+      abort "Trying to use both --use-key-file and --key -- make up your mind!"
     end
     if (@use_key_file)
       DroneBL::key = File.read(File.expand_path(@key_file)).chomp
@@ -66,7 +66,7 @@ class Options
     end
     if @ips.nil? || (@ips.empty? && !@read_from_stdin)
       puts @ips
-      throw ArgumentError, 'No IPs given and you\'re not reading from stdin -- this is a noop!'
+      abort 'No IPs given and you\'re not reading from stdin -- this is a noop!'
     end
   end
 end
@@ -98,34 +98,29 @@ def print_table data, long_types=false
   end
   puts '=' * 135
 end
-begin
-  opts = Options.new
-  opts.parse! ARGV
+opts = Options.new
+opts.parse! ARGV
 
-  if opts.read_from_stdin
-    while line = STDIN.gets
-      opts.ips << line.chomp
-    end
+if opts.read_from_stdin
+  while line = STDIN.gets
+    opts.ips << line.chomp
   end
+end
 
-  opts.ips.uniq!
+opts.ips.uniq!
 
-  prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) }
-  valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
-  invalid += ipv6
-  if @dry_run
-    puts DroneBL::gen_lookup_query valid
-    puts "#{valid.count} IPs will be looked up."
-  else
-    response = DroneBL::lookup(valid)
-    print_table response, opts.long_types
-    puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
-  end
-  unless invalid.empty?
-    puts "IPs not valid for lookup: "
-    invalid.each { |ip| puts ip }
-  end
-rescue ArgumentError => e
-  puts "error in"
-  puts e.backtrace
+prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) }
+valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
+invalid += ipv6
+if @dry_run
+  puts DroneBL::gen_lookup_query valid
+  puts "#{valid.count} IPs will be looked up."
+else
+  response = DroneBL::lookup(valid)
+  print_table response, opts.long_types
+  puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
+end
+unless invalid.empty?
+  puts "IPs not valid for lookup: "
+  invalid.each { |ip| puts ip }
 end
