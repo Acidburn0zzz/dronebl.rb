@@ -113,10 +113,10 @@ prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) 
 valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
 invalid += ipv6
 if @dry_run
-  puts DroneBL::gen_lookup_query valid
+  puts DroneBL::gen_lookup_query valid, opts.get_archived
   puts "#{valid.count} IPs will be looked up."
 else
-  response = DroneBL::lookup(valid)
+  response = DroneBL::lookup(valid, opts.get_archived)
   print_table response, opts.long_types
   puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
 end
