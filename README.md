@@ -9,3 +9,6 @@ IMPORTANT: Read the --help for dronebl-add and dronebl-query!
 
 # Helpful tricks
 Put your DroneBL RPC2 key in `~/.droneblkey` and pass the `-u` flag to dronebl-{add,query} for easiest use.
+
+# Example output
+For `dronebl-query` -- https://gist.github.com/1c46aa5e5fbb197008c0 
