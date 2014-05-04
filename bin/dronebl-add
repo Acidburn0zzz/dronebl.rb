@@ -93,14 +93,14 @@ prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) 
 valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
 invalid += ipv6
 if @dry_run
-puts DroneBL::gen_add_query valid
-puts "#{valid.count} IPs will be added as type #{opts.type}#{" with comment 'opts.comment if opts.comment}'"}."
+  puts DroneBL::gen_add_query valid
+  puts "#{valid.count} IPs will be added as type #{opts.type}#{" with comment 'opts.comment if opts.comment}'"}."
 else
-response = DroneBL::add(valid, type, comment)
-print_table response, opts.long_types
-puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
+  response = DroneBL::add(valid, type, comment)
+  print_table response, opts.long_types
+  puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
 end
 unless invalid.empty?
-puts "IPs not valid for lookup: "
-invalid.each { |ip| puts ip }
+  puts "IPs not valid for lookup: "
+  invalid.each { |ip| puts ip }
 end
