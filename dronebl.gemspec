@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'dronebl.rb'
-  s.version     = '0.0.1'
+  s.version     = '0.0.2'
   s.date        = '2014-05-04'
   s.summary     = "Interface to the DroneBL RPC2 service"
   s.description = "NOTE: You should create a ~/.droneblkey file with your key inside of it for the best experience with this."
