@@ -15,7 +15,7 @@ class Options
       opts.banner = "Usage: #{$0} [options]"
       opts.separator ""
       opts.separator "Options available:"
-      opts.on('-I', '--ips [ip1,ip2,ip3,...]', Array, 'Read in IPs.') do |list|
+      opts.on('-I', '--ips ip1,ip2,ip3,...', Array, 'Read in IPs.') do |list|
         @ips += list
       end
       opts.on('-s', '--stdin', 'Read a newline-delimited list of IPs from STDIN') do
@@ -24,16 +24,16 @@ class Options
       opts.on('-k', '--key KEY', String, 'Use KEY as your DroneBL RPC2 key') do |key|
         @key_str = key
       end
-      opts.on('-f', '--keyfile [FILE_PATH]', 'Read the file at FILE_PATH and use it as the RPC key') do |path|
+      opts.on('-f', '--keyfile FILE_PATH', 'Read the file at FILE_PATH and use it as the RPC key') do |path|
         @use_key_file = true
         @key_file = path
       end
       opts.on('-a', '--get-archived', 'Get *all* DroneBL listings of the given IP, not just active ones.') do
         @get_archived = true
       end
-      opts.on('-T', '--time-format [FORMAT]', String, 'Interpolate the time format string with FORMAT instead of the default. See `man 3 strftime` for format specifiers.') do |fmt|
-        @time_format = fmt
-      end
+#      opts.on('-T', '--time-format FORMAT', String, 'Interpolate the time format string with FORMAT instead of the default. See `man 3 strftime` for format specifiers.') do |fmt|
+#        @time_format = fmt
+#      end
       opts.on('-u', '--use-key-file', 'Use the default key file located at ~/.droneblkey') do
         @use_key_file = true
       end

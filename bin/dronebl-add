@@ -24,7 +24,7 @@ class Options
       opts.on('-k', '--key KEY', String, 'Use KEY as your DroneBL RPC2 key') do |key|
         @key_str = key
       end
-      opts.on('-f', '--keyfile [FILE_PATH]', 'Read the file at FILE_PATH and use it as the RPC key') do |path|
+      opts.on('-f', '--keyfile FILE_PATH', 'Read the file at FILE_PATH and use it as the RPC key') do |path|
         @use_key_file = true
         @key_file = path
       end
@@ -35,7 +35,7 @@ class Options
         puts DroneBL::TYPES.map { |k, v| "#{k} : #{v}"}.join("\n")
         exit
       end
-      opts.on('-c', '--comment [COMMENT]', String, 'Attach the given comment to the listings.') do |comment|
+      opts.on('-c', '--comment COMMENT', String, 'Attach the given comment to the listings.') do |comment|
         @comment = comment
         opts.on('-u', '--use-key-file', 'Use the default key file located at ~/.droneblkey') do
           @use_key_file = true
