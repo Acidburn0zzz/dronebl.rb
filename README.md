@@ -1,6 +1,7 @@
 dronebl.rb
 ==========
 
+[![Gem Version](https://badge.fury.io/rb/dronebl.rb.svg)](http://badge.fury.io/rb/dronebl.rb)
 
 Installation: `# gem install dronebl.rb` or `$ gem install --user dronebl.rb`
 
