@@ -1,0 +1,131 @@
+#!/usr/bin/env ruby
+# copyright Rylee Fowler 2014
+# see LICENSE for more details
+require './dronebl-client.rb'
+require 'resolv'
+require 'optparse'
+class Options
+  attr_reader :read_from_stdin, :key_str, :key_file, :get_archived, :long_types,
+    :dry_run, :time_format, :use_key_file
+  attr_accessor :ips
+  def initialize
+    @key_file = File.expand_path "~/.droneblkey"
+    @ips = []
+    @opt_parser = OptionParser.new do |opts|
+      opts.banner = "Usage: #{$0} [options]"
+      opts.separator ""
+      opts.separator "Options available:"
+      opts.on('-I', '--ips [ip1,ip2,ip3,...]', Array, 'Read in IPs.') do |list|
+        @ips += list
+      end
+      opts.on('-s', '--stdin', 'Read a newline-delimited list of IPs from STDIN') do
+        @read_from_stdin = true
+      end
+      opts.on('-k', '--key KEY', String, 'Use KEY as your DroneBL RPC2 key') do |key|
+        @key_str = key
+      end
+      opts.on('-f', '--keyfile [FILE_PATH]', 'Read the file at FILE_PATH and use it as the RPC key') do |path|
+        @use_key_file = true
+        @key_file = path
+      end
+      opts.on('-a', '--get-archived', 'Get *all* DroneBL listings of the given IP, not just active ones.') do
+        @get_archived = true
+      end
+      opts.on('-T', '--time-format [FORMAT]', String, 'Interpolate the time format string with FORMAT instead of the default. See `man 3 strftime` for format specifiers.') do |fmt|
+        @time_format = fmt
+      end
+      opts.on('-u', '--use-key-file', 'Use the default key file located at ~/.droneblkey') do
+        @use_key_file = true
+      end
+      opts.on('-L', '--long-types', 'Print type definitions instead of numeric types for record matches.') do
+        @long_types = true
+      end
+      opts.on('-d', '--dry-run', 'Prints the query to be run to STDOUT instead of sending it as a query to the DroneBL RPC service.') do
+        @dry_run = true
+      end
+      opts.on_tail("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
+    end
+  end
+  def parse! args
+    @opt_parser.parse! args
+
+    if (@use_key_file && !(File.exists? @key_file)) && @key_str.nil?
+      throw ArgumentError, "No key string provided and #{@key_file} does not exist -- unable to authenticate. See http://dronebl.org/rpckey_signup if you need a key."
+    end
+    if @use_key_file && !@key_str.nil?
+      throw ArgumentError, "Trying to use both --use-key-file and --key -- make up your mind!"
+    end
+    if (@use_key_file)
+      DroneBL::key = File.read(File.expand_path(@key_file)).chomp
+    else
+      DroneBL::key = @key_str
+    end
+    if @ips.nil? || (@ips.empty? && !@read_from_stdin)
+      puts @ips
+      throw ArgumentError, 'No IPs given and you\'re not reading from stdin -- this is a noop!'
+    end
+  end
+end
+
+# end option parsing logic, begin program logic
+def print_table data, long_types=false
+  typelen = 5
+  if long_types
+    typelen = 35
+  end
+  puts [
+    'IP'.ljust(15),
+    'Currently listed?'.rjust(17),
+    'Type'.rjust(typelen),
+    'Comment'.ljust(25),
+    'ID'.ljust(9),
+    'Time'.ljust(25)
+  ].join '|'
+  puts '-' * 135
+  data.each do |data|
+    puts [
+      data['ip'].ljust(15),
+      (data['listed'] == '1' ? 'YES' : 'NO').rjust(17),
+      (long_types ? DroneBL::TYPES[data['type']] : data['type']).rjust(typelen),
+      data['comment'].ljust(25),
+      data['id'].ljust(9),
+      Time.at(data['timestamp'].to_i).to_s.ljust(25)
+    ].join '|'
+  end
+  puts '=' * 135
+end
+begin
+  opts = Options.new
+  opts.parse! ARGV
+
+  if opts.read_from_stdin
+    while line = STDIN.gets
+      opts.ips << line.chomp
+    end
+  end
+
+  opts.ips.uniq!
+
+  prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) }
+  valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
+  invalid += ipv6
+  if @dry_run
+    puts DroneBL::gen_lookup_query valid
+    puts "#{valid.count} IPs will be looked up."
+  else
+    response = DroneBL::lookup(valid)
+    print_table response, opts.long_types
+    puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
+  end
+  unless invalid.empty?
+    puts "IPs not valid for lookup: "
+    invalid.each { |ip| puts ip }
+  end
+rescue ArgumentError => e
+  puts "error in"
+  puts e.backtrace
+end
