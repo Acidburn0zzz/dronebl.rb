@@ -8,6 +8,6 @@ Gem::Specification.new do |s|
   s.email       = 'rylee@rylee.me'
   s.files       = ["lib/dronebl-client.rb","bin/dronebl-query", "bin/dronebl-add"]
   s.executables = ["dronebl-query", "dronebl-add"]
-  s.homepage    = 'http://rubygems.org/gems/dronebl.rb'
+  s.homepage    = 'http://github.com/rylai-/dronebl.rb'
   s.license     = 'MIT'
 end
