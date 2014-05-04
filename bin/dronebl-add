@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 # copyright Rylee Fowler 2014
 # see LICENSE for more details
-require './dronebl-client.rb'
+require 'dronebl-client'
 require 'resolv'
 require 'optparse'
 class Options
-  attr_reader :read_from_stdin, :key_str, :key_file, :get_archived, :long_types,
-    :dry_run, :time_format, :use_key_file
+  attr_reader :read_from_stdin, :key_str, :key_file, :type, :comment, :dry_run,
+    :use_key_file, :no_check
   attr_accessor :ips
   def initialize
     @key_file = File.expand_path "~/.droneblkey"
@@ -28,20 +28,23 @@ class Options
         @use_key_file = true
         @key_file = path
       end
-      opts.on('-a', '--get-archived', 'Get *all* DroneBL listings of the given IP, not just active ones.') do
-        @get_archived = true
+      opts.on('-t', '--type TYPE', String, 'Mark submissions as TYPE. Valid types can be seen with the "-T" option.') do |type|
+        @type = type
       end
-      opts.on('-T', '--time-format [FORMAT]', String, 'Interpolate the time format string with FORMAT instead of the default. See `man 3 strftime` for format specifiers.') do |fmt|
-        @time_format = fmt
+      opts.on('-T', '--show-types', 'Show all valid types for IP submission') do
+        puts DroneBL::TYPES.map { |k, v| "#{k} : #{v}"}.join("\n")
+        exit
       end
-      opts.on('-u', '--use-key-file', 'Use the default key file located at ~/.droneblkey') do
-        @use_key_file = true
-      end
-      opts.on('-L', '--long-types', 'Print type definitions instead of numeric types for record matches.') do
-        @long_types = true
-      end
-      opts.on('-d', '--dry-run', 'Prints the query to be run to STDOUT instead of sending it as a query to the DroneBL RPC service.') do
-        @dry_run = true
+      opts.on('-c', '--comment [COMMENT]', String, 'Attach the given comment to the listings.') do |comment|
+        @comment = comment
+        opts.on('-u', '--use-key-file', 'Use the default key file located at ~/.droneblkey') do
+          @use_key_file = true
+        end
+        opts.on('-d', '--dry-run', 'Prints the query to be run to STDOUT instead of sending it as a query to the DroneBL RPC service.') do
+          @dry_run = true
+        end
+        #opts.on('-n', '--no-pre-check', 'Do not check DroneBL for the IPs you are about to submit with a lookup before doing it.') do
+        #  @no_check = true
       end
       opts.on_tail("-h", "--help", "Show this message") do
         puts opts
@@ -65,39 +68,16 @@ class Options
       DroneBL::key = @key_str
     end
     if @ips.nil? || (@ips.empty? && !@read_from_stdin)
-      puts @ips
       abort 'No IPs given and you\'re not reading from stdin -- this is a noop!'
     end
+    if @type.nil?
+      abort "No type given! Please read #{$0} --help again."
+    end
+
   end
 end
 
 # end option parsing logic, begin program logic
-def print_table data, long_types=false
-  typelen = 5
-  if long_types
-    typelen = 35
-  end
-  puts [
-    'IP'.ljust(15),
-    'Currently listed?'.rjust(17),
-    'Type'.rjust(typelen),
-    'Comment'.ljust(25),
-    'ID'.ljust(9),
-    'Time'.ljust(25)
-  ].join '|'
-  puts '-' * 135
-  data.each do |data|
-    puts [
-      data['ip'].ljust(15),
-      (data['listed'] == '1' ? 'YES' : 'NO').rjust(17),
-      (long_types ? DroneBL::TYPES[data['type']] : data['type']).rjust(typelen),
-      data['comment'].ljust(25),
-      data['id'].ljust(9),
-      Time.at(data['timestamp'].to_i).to_s.ljust(25)
-    ].join '|'
-  end
-  puts '=' * 135
-end
 opts = Options.new
 opts.parse! ARGV
 
@@ -113,14 +93,14 @@ prevalid, ipv6 = opts.ips.partition { |ip| (ip.match(Resolv::IPv6::Regex).nil?) 
 valid, invalid = prevalid.partition { |ip| !(ip.match(Resolv::IPv4::Regex).nil?) }
 invalid += ipv6
 if @dry_run
-  puts DroneBL::gen_lookup_query valid
-  puts "#{valid.count} IPs will be looked up."
+puts DroneBL::gen_add_query valid
+puts "#{valid.count} IPs will be added as type #{opts.type}#{" with comment 'opts.comment if opts.comment}'"}."
 else
-  response = DroneBL::lookup(valid)
-  print_table response, opts.long_types
-  puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
+response = DroneBL::add(valid, type, comment)
+print_table response, opts.long_types
+puts "#{valid.count} IPs looked up. #{response.map { |r| r['ip'] }.uniq.length} unique IPs found in response."
 end
 unless invalid.empty?
-  puts "IPs not valid for lookup: "
-  invalid.each { |ip| puts ip }
+puts "IPs not valid for lookup: "
+invalid.each { |ip| puts ip }
 end
