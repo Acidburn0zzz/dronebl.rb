@@ -36,7 +36,7 @@ module DroneBL
       Nokogiri::XML("<?xml version='1.0'>\n<results>#{resp.text}</results>").css("result").map(&:to_h) # thanks to jhass in #ruby on freenode
     end
 
-    def gen_lookup_query ips, archived
+    def gen_lookup_query ips, archived=false
       <<EOF
 <?xml version='1.0'?>
 <request key='#{key}'>
@@ -44,7 +44,7 @@ module DroneBL
 </request>
 EOF
     end
-    def gen_add_query ips, type, comment
+    def gen_add_query ips, type, comment=''
       "<?xml version='1.0'?>
 <request key='#{key}'>
       #{ips.map { |ip| "<add ip='#{ip}' type='#{type}'#{ " comment='#{comment}'" unless comment.empty?}>"}.join("\n")}
