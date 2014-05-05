@@ -46,36 +46,36 @@ class Options
       end
       #opts.on('-n', '--no-pre-check', 'Do not check DroneBL for the IPs you are about to submit with a lookup before doing it.') do
       #  @no_check = true
+      #end
+      opts.on_tail("-h", "--help", "Show this message") do
+        puts opts
+        exit
+      end
+
     end
-    opts.on_tail("-h", "--help", "Show this message") do
-      puts opts
-      exit
+  end
+  def parse! args
+    @opt_parser.parse! args
+
+    if (@use_key_file && !(File.exists? @key_file)) && @key_str.nil?
+      abort "No key string provided and #{@key_file} does not exist -- unable to authenticate. See http://dronebl.org/rpckey_signup if you need a key."
+    end
+    if @use_key_file && !@key_str.nil?
+      abort "Trying to use both --use-key-file and --key -- make up your mind!"
+    end
+    if (@use_key_file)
+      DroneBL::key = File.read(File.expand_path(@key_file)).chomp
+    else
+      DroneBL::key = @key_str
+    end
+    if @ips.nil? || (@ips.empty? && !@read_from_stdin)
+      abort 'No IPs given and you\'re not reading from stdin -- this is a noop!'
+    end
+    if @type.nil?
+      abort "No type given! Please read #{$0} --help again."
     end
 
   end
-end
-def parse! args
-  @opt_parser.parse! args
-
-  if (@use_key_file && !(File.exists? @key_file)) && @key_str.nil?
-    abort "No key string provided and #{@key_file} does not exist -- unable to authenticate. See http://dronebl.org/rpckey_signup if you need a key."
-  end
-  if @use_key_file && !@key_str.nil?
-    abort "Trying to use both --use-key-file and --key -- make up your mind!"
-  end
-  if (@use_key_file)
-    DroneBL::key = File.read(File.expand_path(@key_file)).chomp
-  else
-    DroneBL::key = @key_str
-  end
-  if @ips.nil? || (@ips.empty? && !@read_from_stdin)
-    abort 'No IPs given and you\'re not reading from stdin -- this is a noop!'
-  end
-  if @type.nil?
-    abort "No type given! Please read #{$0} --help again."
-  end
-
-end
 end
 
 # end option parsing logic, begin program logic

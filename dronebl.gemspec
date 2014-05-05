@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'dronebl.rb'
-  s.version     = '0.0.5'
+  s.version     = '0.0.5-1'
   s.date        = '2014-05-04'
   s.description = "Interface to the DroneBL RPC2 service"
   s.summary     = [
