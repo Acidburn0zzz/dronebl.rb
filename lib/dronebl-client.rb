@@ -37,6 +37,7 @@ module DroneBL
     end
 
     def gen_lookup_query ips, archived=false
+      archived ||= false
       <<EOF
 <?xml version='1.0'?>
 <request key='#{key}'>
@@ -45,9 +46,10 @@ module DroneBL
 EOF
     end
     def gen_add_query ips, type, comment=''
+      comment ||= ''
       "<?xml version='1.0'?>
 <request key='#{key}'>
-      #{ips.map { |ip| "<add ip='#{ip}' type='#{type}'#{ " comment='#{comment}'" unless comment.empty?}>"}.join("\n")}
+      #{ips.map { |ip| "<add ip='#{ip}' type='#{type}'#{ " comment='#{comment}'" unless comment.nil? || comment.empty?}>"}.join("\n")}
 </request>"
     end
 
